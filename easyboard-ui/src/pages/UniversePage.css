@@ -1,0 +1,59 @@
+/* === Conteneur principal === */
+.universe-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;         /* ← s’étend sur toute la hauteur du parent (main) */
+  overflow: hidden;
+}
+
+/* === Panneau gauche === */
+.side-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 20%;
+  background-color: #b91d1d;
+  border-right: 1px solid #ddd;
+  border-radius: 0 8px 8px 0;
+  padding: 1rem;
+  box-sizing: border-box;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+}
+
+.side-panel h3 {
+  margin-top: 0;
+  color: #222;
+  text-align: center;
+}
+
+.side-panel button {
+  display: block;
+  width: 90%;
+  margin: 0.5rem auto;
+  padding: 0.6rem 1rem;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.side-panel button:hover {
+  background: #444;
+}
+
+/* === Zone du graphe Cytoscape === */
+.graph-container {
+  position: absolute;
+  top: 0;
+  left: 20%;     /* démarre juste après le panneau */
+  right: 0;
+  bottom: 0;       /* ← hauteur auto : s’étend jusqu’en bas */
+  background: #4017af;
+  border-radius: 0px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}

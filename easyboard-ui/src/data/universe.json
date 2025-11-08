@@ -1,0 +1,26 @@
+{
+  "nodes": [
+    {
+      "id": "alice",
+      "label": "Alice",
+      "tags": ["mage", "feu"],
+      "position": { "x": 150, "y": 300 }
+    },
+    {
+      "id": "bob",
+      "label": "Bob",
+      "tags": ["guerrier"],
+      "position": { "x": 400, "y": 200 }
+    },
+    {
+      "id": "charlie",
+      "label": "Charlie",
+      "tags": ["voleur"],
+      "position": { "x": 250, "y": 100 }
+    }
+  ],
+  "edges": [
+    { "id": "a-b", "source": "alice", "target": "bob", "label": "ami" },
+    { "id": "a-c", "source": "alice", "target": "charlie", "label": "ennemi" }
+  ]
+}

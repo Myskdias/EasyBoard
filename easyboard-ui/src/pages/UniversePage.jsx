@@ -1,31 +1,28 @@
-/**
- * Page Univers — affichage du graphe interactif avec Cytoscape.js
- */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
+import {
+  getUniverse,
+  updateNodePosition,
+  exportUniverse,
+  importUniverse,
+} from "../graph/graphModel";
+import "./UniversePage.css";
 
 export default function UniversePage() {
-  // useRef permet d’obtenir une référence au conteneur <div> du graphe.
   const cyRef = useRef(null);
-
-  useEffect(() => {
-    // Création de l'instance Cytoscape au montage du composant
+  const fileInputRef = useRef(null);
+  const [cyInstance, setCyInstance] = useState(null);
+  // === Fonction pour créer / charger le graphe ===
+  const loadGraph = (data) => {
     const cy = cytoscape({
-      container: cyRef.current, // div HTML où le graphe sera rendu
-
-      // === Données du graphe : nœuds et arêtes ===
+      container: cyRef.current,
       elements: [
-        // Nœuds (les personnages ou entités)
-        { data: { id: "a", label: "Alice" } },
-        { data: { id: "b", label: "Bob" } },
-        { data: { id: "c", label: "Charlie" } },
-
-        // Arêtes (les relations entre nœuds)
-        { data: { id: "ab", source: "a", target: "b", label: "ami" } },
-        { data: { id: "ac", source: "a", target: "c", label: "ennemi" } },
+        ...data.nodes.map((n) => ({
+          data: { id: n.id, label: n.label },
+          position: n.position,
+        })),
+        ...data.edges.map((e) => ({ data: e })),
       ],
-
-      // === Style visuel du graphe ===
       style: [
         {
           selector: "node",
@@ -48,9 +45,7 @@ export default function UniversePage() {
             "target-arrow-shape": "triangle",
             "curve-style": "bezier",
             "label": "data(label)",
-            "font-size": "12px",
             "text-rotation": "autorotate",
-            "color": "#444",
           },
         },
         {
@@ -59,36 +54,57 @@ export default function UniversePage() {
             "background-color": "#ffb703",
             "line-color": "#ffb703",
             "target-arrow-color": "#ffb703",
-            "source-arrow-color": "#ffb703",
           },
         },
       ],
-
-      // === Mise en page automatique initiale ===
-      layout: {
-        name: "cose", // algo de disposition (circle, grid, breadthfirst, cose…)
-        animate: true,
-      },
-
-      // === Comportement ===
-      wheelSensitivity: 0.2, // vitesse du zoom
+      layout: { name: "preset" }, // garde la disposition du fichier
+      wheelSensitivity: 0.2,
     });
 
-    // Nettoyage à la destruction du composant (bon réflexe React)
-    return () => cy.destroy();
+    // Synchronise les déplacements avec le modèle
+    cy.on("dragfree", "node", (evt) => {
+      const node = evt.target;
+      updateNodePosition(node.id(), node.position());
+    });
+
+    setCyInstance(cy);
+  };
+
+  // === Chargement initial du graphe ===
+  useEffect(() => {
+    loadGraph(getUniverse());
+    return () => cyInstance && cyInstance.destroy();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Le conteneur où le graphe sera affiché
+  // === Gestion de l'import d'un univers ===
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    importUniverse(file, (newData) => {
+      if (cyInstance) cyInstance.destroy();
+      loadGraph(newData);
+    });
+  };
+
   return (
-    <div
-      ref={cyRef}
-      style={{
-        width: "100%",
-        height: "80vh", // prend 80 % de la hauteur visible
-        backgroundColor: "#fff",
-        borderRadius: "8px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-      }}
-    />
-  );
+  <div className="universe-container">
+    <aside className="side-panel">
+      <h3>⚙️ Contrôles</h3>
+
+      <button onClick={() => fileInputRef.current.click()}>📂 Importer</button>
+      <button onClick={exportUniverse}>💾 Exporter</button>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+    </aside>
+
+    <section ref={cyRef} className="graph-container" />
+  </div>
+);
 }
