@@ -12,6 +12,8 @@ export default function UniversePage() {
   const cyRef = useRef(null);
   const fileInputRef = useRef(null);
   const [cyInstance, setCyInstance] = useState(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   // === Fonction pour créer / charger le graphe ===
   const loadGraph = (data) => {
     const cy = cytoscape({
@@ -28,23 +30,23 @@ export default function UniversePage() {
           selector: "node",
           style: {
             "background-color": "#61dafb",
-            "label": "data(label)",
+            label: "data(label)",
             "text-valign": "center",
-            "color": "#222",
+            color: "#222",
             "font-size": "14px",
-            "width": "60px",
-            "height": "60px",
+            width: "60px",
+            height: "60px",
           },
         },
         {
           selector: "edge",
           style: {
-            "width": 2,
+            width: 2,
             "line-color": "#ccc",
             "target-arrow-color": "#ccc",
             "target-arrow-shape": "triangle",
             "curve-style": "bezier",
-            "label": "data(label)",
+            label: "data(label)",
             "text-rotation": "autorotate",
           },
         },
@@ -88,23 +90,37 @@ export default function UniversePage() {
   };
 
   return (
-  <div className="universe-container">
-    <aside className="side-panel">
-      <h3>⚙️ Contrôles</h3>
+    <div className={`universe-container ${isCollapsed ? "collapsed" : ""}`}>
+      <aside className="side-panel">
+        {/* bouton rond collé au bord du panneau */}
+        <button
+          className="toggle-button"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          title={isCollapsed ? "Ouvrir le panneau" : "Fermer le panneau"}
+        >
+          {isCollapsed ? "▶" : "◀"}
+        </button>
 
-      <button onClick={() => fileInputRef.current.click()}>📂 Importer</button>
-      <button onClick={exportUniverse}>💾 Exporter</button>
+        {/* contenu du panneau (caché quand replié) */}
+        <div className="panel-content">
+          <h3>⚙️ Contrôles</h3>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="application/json"
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
-    </aside>
+          <button className="panel-button" onClick={() => fileInputRef.current.click()}>
+            📂 Importer
+          </button>
+          <button className="panel-button" onClick={exportUniverse}>💾 Exporter</button>
 
-    <section ref={cyRef} className="graph-container" />
-  </div>
-);
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+        </div>
+      </aside>
+
+      <section ref={cyRef} className="graph-container" />
+    </div>
+  );
 }
