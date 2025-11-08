@@ -60,7 +60,7 @@ export default function UniversePage() {
         },
       ],
       layout: { name: "preset" }, // garde la disposition du fichier
-      wheelSensitivity: 0.2,
+      wheelSensitivity: 1.5,
     });
 
     // Synchronise les déplacements avec le modèle
@@ -103,7 +103,6 @@ export default function UniversePage() {
 
         {/* contenu du panneau (caché quand replié) */}
         <div className="panel-content">
-          <h3>⚙️ Contrôles</h3>
 
           <button className="panel-button" onClick={() => fileInputRef.current.click()}>
             📂 Importer

@@ -1,0 +1,78 @@
+/* === Conteneur principal === */
+.characters-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: #f7f7f7;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* === Panneau latéral === */
+.characters-panel {
+  width: 25%;
+  min-width: 240px;
+  background: #ececec;
+  border-right: 1px solid #ccc;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.characters-panel h3 {
+  text-align: center;
+  margin-top: 0;
+  color: #333;
+}
+
+/* === Barre de recherche === */
+.search-input {
+  width: 100%;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #555;
+}
+
+/* === Liste des personnages === */
+.characters-list {
+  flex: 1;
+  overflow-y: auto; /* ✅ scroll vertical */
+  scrollbar-width: thin;
+  scrollbar-color: #aaa #f0f0f0;
+}
+
+.character-item {
+  padding: 0.5rem 0.8rem;
+  margin-bottom: 0.3rem;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.character-item:hover {
+  background: #e5e5e5;
+}
+
+.character-item.active {
+  background: #b91d1d;
+  color: white;
+}
+
+/* === Zone de droite === */
+.character-detail {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
