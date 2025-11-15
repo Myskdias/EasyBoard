@@ -76,12 +76,22 @@ export async function importUniverse(file, callback) {
       // === Création du nœud ===
       nodes.push({
         data: {
-          id: charData.id,
-          label: charData.name,
-          tags: charData.tags || [],
-          description: charData.description || "",
+          id: String(c.id),
+          label: String(c.name),
+
+          // NOUVEAU
+          shortDescription: c.shortDescription || "",
+          description: c.description || "",
+
+          tags: Array.isArray(c.tags) ? c.tags : [],
         },
-        position: charData.position || { x: 0, y: 0 },
+
+        position:
+          c.position &&
+          typeof c.position.x === "number" &&
+          typeof c.position.y === "number"
+            ? c.position
+            : { x: 0, y: 0 },
       });
 
       // === Création des arêtes ===
@@ -116,34 +126,49 @@ export async function importUniverse(file, callback) {
 export async function exportUniverse() {
   const zip = new JSZip();
 
-  // Crée le dossier characters/
+  // Dossier characters/
   const folder = zip.folder("characters");
 
-  // Pour chaque nœud → on génère un fichier JSON
   currentUniverse.nodes.forEach((node) => {
     const data = node.data;
+
+    // Sécurise la position (node.position est une fonction Cytoscape)
+    const position =
+      typeof node.position === "function"
+        ? node.position()
+        : node.position || { x: 0, y: 0 };
+
+    // Relations sortantes
+    const relations = currentUniverse.edges
+      .filter((e) => e.data.source === data.id)
+      .map((e) => ({
+        target: e.data.target,
+        label: e.data.label,
+      }));
+
+    // --- FORMAT FINAL D’UN PERSONNAGE ---
     const character = {
       id: data.id,
       name: data.label,
-      tags: data.tags || [],
+
+      // NOUVEAU
+      shortDescription: data.shortDescription || "",
       description: data.description || "",
-      position: node.position || { x: 0, y: 0 },
-      relations: currentUniverse.edges
-        .filter((e) => e.data.source === data.id)
-        .map((e) => ({
-          target: e.data.target,
-          label: e.data.label,
-        })),
+
+      tags: Array.isArray(data.tags) ? data.tags : [],
+
+      position: position,
+      relations: relations,
     };
 
     const fileName = `${data.label.replace(/\s+/g, "_")}.json`;
     folder.file(fileName, JSON.stringify(character, null, 2));
   });
 
-  // Génère le ZIP en blob
+  // Création du ZIP
   const blob = await zip.generateAsync({ type: "blob" });
 
-  // Déclenche le téléchargement
+  // Téléchargement
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -151,3 +176,4 @@ export async function exportUniverse() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
