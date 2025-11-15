@@ -19,11 +19,8 @@ export default function UniversePage() {
     const cy = cytoscape({
       container: cyRef.current,
       elements: [
-        ...data.nodes.map((n) => ({
-          data: { id: n.id, label: n.label },
-          position: n.position,
-        })),
-        ...data.edges.map((e) => ({ data: e })),
+        ...data.nodes, // déjà au bon format { data:{...}, position:{...} }
+        ...data.edges, // déjà au bon format { data:{ source,target,label,... } }
       ],
       style: [
         {
@@ -62,7 +59,7 @@ export default function UniversePage() {
       layout: { name: "preset" }, // garde la disposition du fichier
       wheelSensitivity: 1.5,
     });
-
+    cy.ready(() => cy.fit());
     // Synchronise les déplacements avec le modèle
     cy.on("dragfree", "node", (evt) => {
       const node = evt.target;
@@ -103,11 +100,15 @@ export default function UniversePage() {
 
         {/* contenu du panneau (caché quand replié) */}
         <div className="panel-content">
-
-          <button className="panel-button" onClick={() => fileInputRef.current.click()}>
+          <button
+            className="panel-button"
+            onClick={() => fileInputRef.current.click()}
+          >
             📂 Importer
           </button>
-          <button className="panel-button" onClick={exportUniverse}>💾 Exporter</button>
+          <button className="panel-button" onClick={exportUniverse}>
+            💾 Exporter
+          </button>
 
           <input
             ref={fileInputRef}

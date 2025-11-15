@@ -1,25 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./CharactersPage.css";
+import { getUniverse } from "../graph/graphModel";
 
 export default function CharactersPage() {
   const [search, setSearch] = useState("");
-  const [characters, setCharacters] = useState([
-    { id: 1, name: "Arya Stark" },
-    { id: 2, name: "Jon Snow" },
-    { id: 3, name: "Tyrion Lannister" },
-    { id: 4, name: "Daenerys Targaryen" },
-    { id: 5, name: "Sansa Stark" },
-  ]);
+  const [characters, setCharacters] = useState([]);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
 
-  // Filtrage simple
+  // 🔄 Charge les personnages depuis le modèle global
+  useEffect(() => {
+    // Fonction pour rafraîchir la liste
+    const refreshCharacters = (universe) => {
+      if (universe && universe.nodes) {
+        const chars = universe.nodes.map((n) => ({
+          id: n.data.id,
+          name: n.data.label,
+          tags: n.data.tags || [],
+          description: n.data.description || "",
+        }));
+        setCharacters(chars);
+      }
+    };
+
+    // Chargement initial
+    refreshCharacters(getUniverse());
+
+    // 🔔 Abonnement aux changements
+    const unsubscribe = subscribeToUniverseUpdate(refreshCharacters);
+
+    // Nettoyage quand le composant est démonté
+    return unsubscribe;
+  }, []);
+
+  // 🔍 Filtrage
   const filtered = characters.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="characters-container">
-      {/* === PANEL LATÉRAL === */}
+      {/* === PANEL GAUCHE === */}
       <aside className="characters-panel">
         <h3>Personnages</h3>
         <input
@@ -50,10 +70,24 @@ export default function CharactersPage() {
         {selectedCharacter ? (
           <div>
             <h2>{selectedCharacter.name}</h2>
-            <p>Fiche personnage (à venir...)</p>
+            <p>{selectedCharacter.description || "Aucune description"}</p>
+
+            {selectedCharacter.tags.length > 0 && (
+              <div>
+                <h4>Tags :</h4>
+                <ul>
+                  {selectedCharacter.tags.map((t, i) => (
+                    <li key={i}>
+                      <strong>{t.name}</strong> ({t.type}) :{" "}
+                      {t.value.toString()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ) : (
-          <p>Sélectionnez un personnage pour voir sa fiche</p>
+          <p>Sélectionnez un personnage pour voir sa fiche.</p>
         )}
       </section>
     </div>
