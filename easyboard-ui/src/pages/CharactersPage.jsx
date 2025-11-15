@@ -1,93 +1,103 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./CharactersPage.css";
-import { getUniverse } from "../graph/graphModel";
+import { getUniverse, subscribeToUniverseUpdate } from "../graph/graphModel";
 
 export default function CharactersPage() {
   const [search, setSearch] = useState("");
   const [characters, setCharacters] = useState([]);
-  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [selected, setSelected] = useState(null);
 
-  // 🔄 Charge les personnages depuis le modèle global
-  useEffect(() => {
-    // Fonction pour rafraîchir la liste
-    const refreshCharacters = (universe) => {
-      if (universe && universe.nodes) {
-        const chars = universe.nodes.map((n) => ({
-          id: n.data.id,
-          name: n.data.label,
-          tags: n.data.tags || [],
-          description: n.data.description || "",
-        }));
-        setCharacters(chars);
+  // Fonction de (re)chargement depuis le modèle global
+  const refresh = (universe) => {
+    try {
+      const nodes = universe?.nodes ?? [];
+      const list = nodes.map((n) => ({
+        id: n?.data?.id ?? "",
+        name: n?.data?.label ?? "(sans nom)",
+        tags: Array.isArray(n?.data?.tags) ? n.data.tags : [],
+        description: n?.data?.description ?? "",
+      }));
+      setCharacters(list);
+
+      // si le perso sélectionné n’existe plus, on le désélectionne
+      if (selected && !list.some((c) => c.id === selected.id)) {
+        setSelected(null);
       }
-    };
+    } catch (e) {
+      console.error("CharactersPage refresh error:", e);
+      setCharacters([]);
+      setSelected(null);
+    }
+  };
 
-    // Chargement initial
-    refreshCharacters(getUniverse());
-
-    // 🔔 Abonnement aux changements
-    const unsubscribe = subscribeToUniverseUpdate(refreshCharacters);
-
-    // Nettoyage quand le composant est démonté
-    return unsubscribe;
+  useEffect(() => {
+    // chargement initial
+    refresh(getUniverse());
+    // abonnement aux mises à jour (import ZIP, etc.)
+    const unsub = subscribeToUniverseUpdate(refresh);
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 🔍 Filtrage
   const filtered = characters.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="characters-container">
-      {/* === PANEL GAUCHE === */}
+      {/* PANEL GAUCHE */}
       <aside className="characters-panel">
         <h3>Personnages</h3>
         <input
+          className="search-input"
           type="text"
           placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="search-input"
         />
 
         <div className="characters-list">
           {filtered.map((c) => (
             <div
-              key={c.id}
-              className={`character-item ${
-                selectedCharacter?.id === c.id ? "active" : ""
-              }`}
-              onClick={() => setSelectedCharacter(c)}
+              key={c.id || c.name}
+              className={`character-item ${selected?.id === c.id ? "active" : ""}`}
+              onClick={() => setSelected(c)}
+              title={c.name}
             >
               {c.name}
             </div>
           ))}
+          {filtered.length === 0 && (
+            <div className="empty-hint">Aucun personnage</div>
+          )}
         </div>
       </aside>
 
-      {/* === ZONE DE DROITE === */}
+      {/* ZONE DROITE */}
       <section className="character-detail">
-        {selectedCharacter ? (
-          <div>
-            <h2>{selectedCharacter.name}</h2>
-            <p>{selectedCharacter.description || "Aucune description"}</p>
+        {selected ? (
+          <div className="detail-card">
+            <h2>{selected.name}</h2>
+            <p className="desc">
+              {selected.description || "Aucune description."}
+            </p>
 
-            {selectedCharacter.tags.length > 0 && (
-              <div>
-                <h4>Tags :</h4>
-                <ul>
-                  {selectedCharacter.tags.map((t, i) => (
+            {selected.tags?.length > 0 && (
+              <>
+                <h4>Tags</h4>
+                <ul className="tags">
+                  {selected.tags.map((t, i) => (
                     <li key={i}>
-                      <strong>{t.name}</strong> ({t.type}) :{" "}
-                      {t.value.toString()}
+                      <strong>{t.name}</strong> <em>({t.type})</em> :{" "}
+                      <span>{String(t.value)}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </>
             )}
           </div>
         ) : (
-          <p>Sélectionnez un personnage pour voir sa fiche.</p>
+          <div className="placeholder">Sélectionnez un personnage…</div>
         )}
       </section>
     </div>
