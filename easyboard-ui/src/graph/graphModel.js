@@ -62,57 +62,107 @@ export function updateNodePosition(nodeId, position) {
  * }
  */
 export async function importUniverse(file, callback) {
+  console.log("➡️ importUniverse() called with file:", file);
+
   const zip = new JSZip();
-  const loaded = await zip.loadAsync(file);
+  let loaded;
+
+  try {
+    loaded = await zip.loadAsync(file);
+    console.log("✔ ZIP loaded. Files inside:", Object.keys(loaded.files));
+  } catch (err) {
+    console.error("❌ Failed to load ZIP:", err);
+    return;
+  }
 
   const nodes = [];
   const edges = [];
 
+  console.log("➡️ Starting to scan files...");
+
   for (const path in loaded.files) {
+    console.log("🔍 Checking file:", path);
+
     if (path.startsWith("characters/") && path.endsWith(".json")) {
-      const content = await loaded.files[path].async("string");
-      const charData = JSON.parse(content);
+      console.log("📄 Character file detected:", path);
+
+      let content;
+      try {
+        content = await loaded.files[path].async("string");
+      } catch (err) {
+        console.error("❌ Failed to read file:", path, err);
+        continue;
+      }
+
+      let charData;
+      try {
+        charData = JSON.parse(content);
+        console.log("✔ Parsed JSON:", charData);
+      } catch (err) {
+        console.error("❌ Failed to parse JSON in", path, err);
+        continue;
+      }
 
       // === Création du nœud ===
-      nodes.push({
-        data: {
-          id: String(c.id),
-          label: String(c.name),
+      try {
+        nodes.push({
+          data: {
+            id: String(charData.id),
+            label: String(charData.name),
 
-          // NOUVEAU
-          shortDescription: c.shortDescription || "",
-          description: c.description || "",
+            // NOUVEAU
+            shortDescription: charData.shortDescription || "",
+            description: charData.description || "",
 
-          tags: Array.isArray(c.tags) ? c.tags : [],
-        },
+            tags: Array.isArray(charData.tags) ? charData.tags : [],
+          },
 
-        position:
-          c.position &&
-          typeof c.position.x === "number" &&
-          typeof c.position.y === "number"
-            ? c.position
-            : { x: 0, y: 0 },
-      });
+          position:
+            charData.position &&
+            typeof charData.position.x === "number" &&
+            typeof charData.position.y === "number"
+              ? charData.position
+              : { x: 0, y: 0 },
+        });
+
+        console.log("✔ Node created for:", charData.name);
+      } catch (err) {
+        console.error("❌ Failed to create node for:", charData, err);
+      }
 
       // === Création des arêtes ===
       if (Array.isArray(charData.relations)) {
+        console.log(`➡️ Creating ${charData.relations.length} edges for ${charData.name}`);
+
         for (const rel of charData.relations) {
-          edges.push({
-            data: {
-              id: `${charData.id}-${rel.target}-${rel.label}`,
-              source: charData.id,
-              target: rel.target,
-              label: rel.label,
-            },
-          });
+          try {
+            edges.push({
+              data: {
+                id: `${charData.id}-${rel.target}-${rel.label}`,
+                source: charData.id,
+                target: rel.target,
+                label: rel.label,
+              },
+            });
+            console.log("   ✔ Edge created:", rel);
+          } catch (err) {
+            console.error("❌ Failed to create edge:", rel, err);
+          }
         }
       }
     }
   }
 
+  console.log("➡️ Import finished.");
+  console.log("📌 Nodes imported:", nodes.length);
+  console.log("📌 Edges imported:", edges.length);
+
   currentUniverse = { nodes, edges };
-  notifyUniverseUpdate(); // 🔔 informe tous les abonnés
+  notifyUniverseUpdate();
+
   if (callback) callback(currentUniverse);
+
+  console.log("✔ Universe loaded and callback executed.");
 }
 
 /* ============================================================
